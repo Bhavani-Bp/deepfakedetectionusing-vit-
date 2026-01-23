@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Deepfake Detection Tool - VisionShield</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+
+<body>
+    <nav class="navbar">
+        <a href="/" class="logo">VisionShield</a>
+        <div class="nav-links">
+            <a href="/">Home</a>
+            <a href="#">About</a>
+            <a href="#" class="active">Detect</a>
+            <a href="#">Logout</a>
+        </div>
+    </nav>
+
+    <div class="detection-container">
+        <h2 class="section-title">Analyze Media</h2>
+
+        <div class="upload-area" id="uploadArea">
+            <i class="fas fa-cloud-upload-alt upload-icon"></i>
+            <h3>Drag & Drop or Click to Upload</h3>
+            <p class="upload-text">Supports JPG, PNG, MP4, AVI</p>
+            <input type="file" id="fileInput" hidden accept="image/*,video/*">
+        </div>
+
+        <div id="loadingState" style="display: none;">
+            <div class="loading-spinner"></div>
+            <p>Analyzing media using Advanced AI Models...</p>
+            <p style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.5rem;">Process: Face Extraction ->
+                Feature Embedding -> Deepfake Classification</p>
+        </div>
+
+        <div class="result-card" id="resultCard">
+            <div class="image-preview-container" style="margin-bottom: 2rem;">
+                <!-- Preview injected here -->
+            </div>
+
+            <div id="predictionBadge" class="badge">PENDING</div>
+
+            <div style="text-align: left; margin-bottom: 1rem;">
+                <span>Confidence Score: <strong id="confidenceValue">0%</strong></span>
+                <div class="confidence-meter">
+                    <div class="confidence-bar" id="confidenceBar"></div>
+                </div>
+            </div>
+
+            <div class="disclaimer">
+                <i class="fas fa-info-circle"></i>
+                <span>Analysis result details.</span>
+            </div>
+
+            <div class="frames-grid" id="framesGrid" style="display: none;">
+                <h4>Analyzed Frames</h4>
+                <div id="framesContainer"
+                    style="display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin-top: 10px;">
+                    <!-- Frames injected here -->
+                </div>
+            </div>
+
+            <button id="resetBtn" class="cta-button" style="margin-top: 2rem;">Analyze Another File</button>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+
+</html>

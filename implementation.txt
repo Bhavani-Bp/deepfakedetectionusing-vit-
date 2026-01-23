@@ -1,0 +1,388 @@
+Understood. I’ll think and write this **exactly like a senior software + AI/ML engineer handing work to an AI agent or team**, with **clear slices**, **execution order**, and **ownership clarity**.
+
+This is a **project decomposition document** you can directly give to your AI agent.
+
+---
+
+# 📌 PROJECT EXECUTION PLAN
+
+**Project:** High-Accuracy Deepfake Detection System
+**Target:** Complete working system in **5 days**
+**Environment:** Google Colab (GPU), PyTorch, FastAPI, HTML/JS
+**Methodology:** Slice-based incremental development
+
+---
+
+## 🧠 OVERALL ENGINEERING STRATEGY
+
+* Start from **data → model → inference → backend → frontend**
+* Each slice must be **independently testable**
+* No slice depends on UI until core ML is validated
+* Prefer **pretrained models + fine-tuning**
+* Focus on **end-to-end correctness first**, then polish
+
+---
+
+# 🔪 PROJECT SLICES (NUMBERED, ORDERED)
+
+## 🟩 SLICE 1 — Project Initialization & Environment Setup
+
+**Objective:**
+Prepare a stable, reproducible development environment.
+
+**Includes:**
+
+* Google Colab GPU enablement
+* Python & dependency setup
+* Folder structure creation
+* Version locking (requirements.txt)
+
+**Deliverables:**
+
+* GPU verified
+* All libraries import without error
+* Project directory tree created
+
+**Why first:**
+Nothing else can proceed without a stable environment.
+
+---
+
+## 🟩 SLICE 2 — Dataset Acquisition & Organization
+
+**Objective:**
+Get a **working subset** of deepfake datasets ready for processing.
+
+**Includes:**
+
+* Dataset selection (FaceForensics++ / DFDC subset)
+* Download & extraction
+* Class separation (real vs fake)
+* Storage optimization for Colab
+
+**Deliverables:**
+
+* `data/real/` and `data/fake/`
+* At least 500–1000 samples total
+* Dataset integrity verified
+
+**Why now:**
+Model design depends on data shape and quality.
+
+---
+
+## 🟩 SLICE 3 — Video Processing & Face Extraction
+
+**Objective:**
+Convert raw videos into **model-ready face images**.
+
+**Includes:**
+
+* Frame sampling from videos
+* Face detection (MTCNN or RetinaFace)
+* Face alignment & cropping
+* Saving faces as images
+
+**Deliverables:**
+
+* Face images extracted correctly
+* No broken frames
+* Sample visual verification
+
+**Why critical:**
+Deepfake artifacts are facial — wrong extraction = bad model.
+
+---
+
+## 🟩 SLICE 4 — Dataset Loader & Augmentation Pipeline
+
+**Objective:**
+Prepare data for efficient and robust training.
+
+**Includes:**
+
+* PyTorch Dataset & DataLoader
+* Image normalization
+* Augmentations (flip, blur, compression)
+* Train/validation split
+
+**Deliverables:**
+
+* DataLoader returns correct tensors
+* Batch loading works on GPU
+* No shape or dtype errors
+
+**Why now:**
+Training depends on a clean data pipeline.
+
+---
+
+## 🟩 SLICE 5 — Model Architecture Design
+
+**Objective:**
+Define a **high-accuracy, efficient deepfake detection model**.
+
+**Includes:**
+
+* Backbone selection (EfficientNet / Xception)
+* Final classification head
+* Weight initialization
+* GPU compatibility
+
+**Deliverables:**
+
+* Model forward pass works
+* Output shape correct
+* Pretrained weights loaded
+
+**Why isolated:**
+Model definition should be correct before training begins.
+
+---
+
+## 🟩 SLICE 6 — Training Pipeline Implementation
+
+**Objective:**
+Train a binary classifier (real vs fake).
+
+**Includes:**
+
+* Loss function (BCE / Focal loss)
+* Optimizer & scheduler
+* Training loop
+* Validation loop
+* Metric tracking (accuracy, AUC)
+
+**Deliverables:**
+
+* Training runs without crashing
+* Validation accuracy ≥ ~85–90%
+* Logs show convergence
+
+**Why now:**
+This is the **core intelligence** of the system.
+
+---
+
+## 🟩 SLICE 7 — Model Checkpointing & Evaluation
+
+**Objective:**
+Select and store the **best-performing model**.
+
+**Includes:**
+
+* Best-model saving
+* Overfitting check
+* Inference on unseen samples
+* Confidence calibration
+
+**Deliverables:**
+
+* `weights.pth` saved
+* Model reproducibility confirmed
+* Clear performance metrics
+
+**Why required:**
+Deployment depends on stable weights.
+
+---
+
+## 🟩 SLICE 8 — Image Inference Pipeline
+
+**Objective:**
+Enable prediction on **single images**.
+
+**Includes:**
+
+* Image preprocessing
+* Face detection on images
+* Model inference
+* Confidence score generation
+
+**Deliverables:**
+
+* Image → REAL/FAKE prediction
+* Confidence score correct
+* Inference under 1s
+
+**Why before video:**
+Image inference is simpler and validates correctness.
+
+---
+
+## 🟩 SLICE 9 — Video Inference Pipeline
+
+**Objective:**
+Enable **video-level deepfake detection**.
+
+**Includes:**
+
+* Frame sampling strategy
+* Face detection per frame
+* Batch inference
+* Temporal aggregation (mean/max)
+
+**Deliverables:**
+
+* Video → prediction works
+* Stable confidence score
+* Handles variable-length videos
+
+**Why here:**
+Builds directly on image inference.
+
+---
+
+## 🟩 SLICE 10 — Backend API Design (FastAPI)
+
+**Objective:**
+Expose the model via a **production-style API**.
+
+**Includes:**
+
+* FastAPI setup
+* Model initialization at startup
+* Upload handling
+* Prediction endpoints
+
+**Deliverables:**
+
+* `/predict-image`
+* `/predict-video`
+* JSON response schema
+
+**Why now:**
+Backend wraps ML into a usable service.
+
+---
+
+## 🟩 SLICE 11 — Backend Optimization & Stability
+
+**Objective:**
+Ensure the backend is **efficient and reliable**.
+
+**Includes:**
+
+* `torch.no_grad()` inference
+* GPU/CPU fallback
+* File cleanup
+* Error handling
+
+**Deliverables:**
+
+* No memory leaks
+* Fast responses
+* Graceful failures
+
+**Why important:**
+Prevents demo-time crashes.
+
+---
+
+## 🟩 SLICE 12 — Frontend UI Implementation
+
+**Objective:**
+Create a simple, functional user interface.
+
+**Includes:**
+
+* File upload UI
+* API request handling
+* Loading state
+* Result display
+
+**Deliverables:**
+
+* Browser upload works
+* Results visible
+* No console errors
+
+**Why later:**
+Frontend depends on stable API.
+
+---
+
+## 🟩 SLICE 13 — Frontend–Backend Integration
+
+**Objective:**
+Connect UI to backend for full flow.
+
+**Includes:**
+
+* API endpoint wiring
+* CORS handling
+* Data formatting
+* Response parsing
+
+**Deliverables:**
+
+* End-to-end flow works
+* Correct results shown
+* UI responsive
+
+---
+
+## 🟩 SLICE 14 — End-to-End Testing & Debugging
+
+**Objective:**
+Verify the entire system works as one unit.
+
+**Includes:**
+
+* Image test
+* Video test
+* Edge cases
+* Performance testing
+
+**Deliverables:**
+
+* No critical bugs
+* Stable predictions
+* Demo-ready system
+
+---
+
+## 🟩 SLICE 15 — Documentation & Final Packaging
+
+**Objective:**
+Make the project **presentable and reusable**.
+
+**Includes:**
+
+* README
+* Setup instructions
+* Architecture overview
+* Usage examples
+
+**Deliverables:**
+
+* Clear documentation
+* Ready for submission/demo
+* Easy to rerun
+
+---
+
+# 🧩 FINAL NOTE (IMPORTANT FOR YOUR AI AGENT)
+
+* **Slices must be completed sequentially**
+* No skipping slices
+* Each slice ends with a **verifiable deliverable**
+* If a slice fails → fix before moving forward
+
+---
+
+## ▶️ WHERE TO START (FOR YOUR AI AGENT)
+
+**START WITH:**
+👉 **SLICE 1 — Project Initialization & Environment Setup**
+
+Once Slice 1 is done, move to Slice 2, and so on.
+
+---
+
+If you want, next I can:
+
+* Convert this into a **task prompt for your AI agent**
+* Or start **implementing Slice 1 immediately with code**
+
+Just tell me what to do next.

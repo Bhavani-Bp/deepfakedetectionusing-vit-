@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Deepfake Detector AI</title>
+    <!-- Modern Font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <!-- Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom Style -->
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <div class="main-container">
+        <!-- Header -->
+        <header>
+            <div class="logo">
+                <i class="fa-solid fa-shield-halved"></i>
+                <span>NekuAndhuku AI</span>
+            </div>
+            <p class="subtitle">Advanced Deepfake Detection System</p>
+        </header>
+
+        <!-- Upload Card -->
+        <div class="card upload-card" id="uploadArea">
+            <div class="upload-content">
+                <div class="icon-container">
+                    <i class="fa-solid fa-cloud-arrow-up"></i>
+                </div>
+                <h3>Upload Image or Video</h3>
+                <p>Drag & drop or click to browse</p>
+                <input type="file" id="fileInput"
+                    accept="image/png, image/jpeg, image/jpg, video/mp4, video/avi, video/mov" hidden>
+                <button class="btn-primary" onclick="document.getElementById('fileInput').click()">
+                    Choose File
+                </button>
+            </div>
+        </div>
+
+        <!-- Loading State -->
+        <div class="loading-container" id="loadingState" style="display: none;">
+            <div class="scanners">
+                <div class="scanner-bar"></div>
+            </div>
+            <p>Analyzing media algorithms...</p>
+        </div>
+
+        <!-- Result Section -->
+        <div class="card result-card" id="resultCard" style="display: none;">
+            <div class="result-header">
+                <h3>Analysis Result</h3>
+                <span class="badge" id="predictionBadge">REAL</span>
+            </div>
+
+            <div class="image-preview-container">
+                <img id="imagePreview" src="" alt="Analyzed face">
+            </div>
+
+            <!-- Sampled Frames Grid (Initially Hidden) -->
+            <div id="framesGrid" class="frames-grid" style="display: none;">
+                <h4>Sampled Frames Analyzed:</h4>
+                <div class="grid-container" id="framesContainer"></div>
+            </div>
+
+            <div class="stats-container">
+                <div class="confidence-label">
+                    <span>Confidence Score</span>
+                    <span id="confidenceValue">0%</span>
+                </div>
+                <div class="progress-bar-bg">
+                    <div class="progress-bar-fill" id="confidenceBar"></div>
+                </div>
+                <p class="disclaimer">
+                    <i class="fa-solid fa-circle-info"></i>
+                    <span>AI prediction based on EfficientNet-B0 analysis.</span>
+                </p>
+            </div>
+
+            <button class="btn-secondary" id="resetBtn">Analyze Another</button>
+        </div>
+
+    </div>
+
+    <!-- Background Elements -->
+    <div class="bg-gradient-1"></div>
+    <div class="bg-gradient-2"></div>
+
+    <script src="script.js"></script>
+</body>
+
+</html>

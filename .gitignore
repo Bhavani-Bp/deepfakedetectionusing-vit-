@@ -1,0 +1,23 @@
+# Large files
+*.zip
+*.crdownload
+*.csv
+*.mp4
+*.jpg
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+env/
+.env
+
+# Project specific
+uploads/
+debug_latest_face.jpg
+real_vs_fake/
+
+# OS
+.DS_Store
+Thumbs.db

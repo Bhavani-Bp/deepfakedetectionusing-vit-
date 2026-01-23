@@ -1,0 +1,26 @@
+# Core ML
+torch>=2.0.0
+torchvision>=0.15.0
+opencv-python-headless
+numpy
+pandas
+matplotlib
+scikit-learn
+
+# Face Detection & Processing
+facenet-pytorch
+albumentations
+Pillow
+
+# Backend (Flask)
+flask
+flask-cors
+timm
+# Backend (FastAPI) - for later slices
+fastapi
+uvicorn
+python-multipart
+
+# Utilities
+tqdm
+requests
