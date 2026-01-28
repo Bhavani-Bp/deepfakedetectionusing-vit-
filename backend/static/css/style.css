@@ -87,6 +87,7 @@ body {
     margin-bottom: 1rem;
     background: var(--accent-gradient);
     -webkit-background-clip: text;
+    background-clip: text;
     -webkit-text-fill-color: transparent;
     line-height: 1.2;
 }
@@ -163,7 +164,7 @@ body {
 
 /* Detection Page Styles */
 .detection-container {
-    max-width: 900px;
+    max-width: 750px;
     margin: 120px auto 50px;
     padding: 2rem;
     background: var(--card-bg);
@@ -176,7 +177,7 @@ body {
 .upload-area {
     border: 2px dashed var(--glass-border);
     border-radius: 10px;
-    padding: 4rem 2rem;
+    padding: 3rem 2rem;
     cursor: pointer;
     transition: border-color 0.3s ease, background 0.3s ease;
     margin-bottom: 2rem;
@@ -263,38 +264,67 @@ body {
     transition: width 1s ease-out;
 }
 
-.preview-container {
-    margin-top: 2rem;
+.image-preview-container {
     width: 100%;
     display: flex;
     justify-content: center;
     background: transparent;
+    margin-bottom: 2rem;
 }
 
-.preview-container img,
-.preview-container video {
+.image-preview-container img,
+.image-preview-container video {
     max-width: 100%;
-    max-height: 300px;
-    /* Fixed small size */
+    max-height: 350px;
+    /* Constrained height */
     width: auto;
     height: auto;
     object-fit: contain;
-    border-radius: 8px;
+    border-radius: 12px;
     border: 1px solid var(--glass-border);
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+    background: #000;
+    /* Backdrop for contain */
 }
 
 .frames-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
-    gap: 10px;
     margin-top: 2rem;
+    padding: 1.5rem;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 12px;
+    border: 1px solid var(--glass-border);
+}
+
+.frames-grid h4 {
+    margin-bottom: 1.5rem;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+#framesContainer {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    justify-content: center;
 }
 
 .sampled-frame {
-    width: 100%;
-    border-radius: 4px;
+    width: 100px;
+    height: 100px;
+    object-fit: cover;
+    border-radius: 8px;
     border: 1px solid var(--glass-border);
+    transition: transform 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+    cursor: zoom-in;
+}
+
+.sampled-frame:hover {
+    transform: scale(1.1);
+    border-color: var(--accent-color);
+    box-shadow: 0 4px 15px rgba(0, 242, 254, 0.3);
+    z-index: 10;
 }
 
 /* Footer (Simple) */

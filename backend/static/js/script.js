@@ -79,9 +79,6 @@ async function handleFile(file) {
         const video = document.createElement('video');
         video.id = 'videoPreview';
         video.controls = true;
-        video.style.width = '100%';
-        video.style.height = '100%';
-        video.style.objectFit = 'contain';
         const url = URL.createObjectURL(file);
         video.src = url;
         previewContainer.appendChild(video);
