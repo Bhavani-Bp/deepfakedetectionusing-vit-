@@ -28,42 +28,76 @@
             <h3>Drag & Drop or Click to Upload</h3>
             <p class="upload-text">Supports JPG, PNG, MP4, AVI</p>
             <input type="file" id="fileInput" hidden accept="image/*,video/*">
-        </div>
-
-        <div id="loadingState" style="display: none;">
-            <div class="loading-spinner"></div>
-            <p>Analyzing media using Advanced AI Models...</p>
-            <p style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.5rem;">Process: Face Extraction ->
-                Feature Embedding -> Deepfake Classification</p>
-        </div>
-
-        <div class="result-card" id="resultCard">
-            <div class="image-preview-container">
-                <!-- Preview injected here -->
+            <div style="margin-top: 1.5rem; border-top: 1px solid var(--glass-border); padding-top: 1.5rem;">
+                <p style="margin-bottom: 1rem; font-size: 0.9rem; color: var(--text-secondary);">OR</p>
+                <button id="startWebcamBtn" class="cta-button" style="padding: 0.8rem 2rem; font-size: 0.9rem;">
+                    <i class="fas fa-camera" style="margin-right: 8px;"></i> Use Live Webcam
+                </button>
             </div>
+        </div>
 
-            <div id="predictionBadge" class="badge">PENDING</div>
-
-            <div style="text-align: left; margin-bottom: 1rem;">
-                <span>Confidence Score: <strong id="confidenceValue">0%</strong></span>
-                <div class="confidence-meter">
-                    <div class="confidence-bar" id="confidenceBar"></div>
+        <div class="live-layout-wrapper" id="liveLayout">
+            <!-- Webcam Stream Container -->
+            <div id="webcamContainer" style="display: none; margin-bottom: 2rem; position: relative;">
+                <div class="webcam-wrapper">
+                    <video id="webcamView" autoplay playsinline muted></video>
+                    <div class="webcam-overlay">
+                        <div class="scan-line"></div>
+                        <div class="face-guide"></div>
+                    </div>
+                </div>
+                <canvas id="captureCanvas" style="display: none;"></canvas>
+                <div class="webcam-controls"
+                    style="margin-top: 1rem; display: flex; justify-content: center; gap: 1rem;">
+                    <button id="stopWebcamBtn" class="cta-button secondary"
+                        style="background: rgba(255,255,255,0.1); color: white; border: 1px solid var(--glass-border);">
+                        Stop Camera
+                    </button>
+                </div>
+                <div id="liveStatus"
+                    style="margin-top: 1rem; font-size: 0.9rem; color: var(--accent-color); font-weight: 600;">
+                    <span class="pulse-dot"></span> LIVE ANALYSIS ACTIVE
                 </div>
             </div>
 
-            <div class="disclaimer">
-                <i class="fas fa-info-circle"></i>
-                <span>Analysis result details.</span>
-            </div>
+            <div class="analysis-column">
+                <div id="loadingState" style="display: none;">
+                    <div class="loading-spinner"></div>
+                    <p>Analyzing media using Advanced AI Models...</p>
+                    <p style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.5rem;">Process: Face
+                        Extraction ->
+                        Feature Embedding -> Deepfake Classification</p>
+                </div>
 
-            <div class="frames-grid" id="framesGrid" style="display: none;">
-                <h4>Analyzed Frames</h4>
-                <div id="framesContainer">
-                    <!-- Frames injected here -->
+                <div class="result-card" id="resultCard">
+                    <div class="image-preview-container">
+                        <!-- Preview injected here -->
+                    </div>
+
+                    <div id="predictionBadge" class="badge">PENDING</div>
+
+                    <div style="text-align: left; margin-bottom: 1rem;">
+                        <span>Confidence Score: <strong id="confidenceValue">0%</strong></span>
+                        <div class="confidence-meter">
+                            <div class="confidence-bar" id="confidenceBar"></div>
+                        </div>
+                    </div>
+
+                    <div class="disclaimer">
+                        <i class="fas fa-info-circle"></i>
+                        <span>Analysis result details.</span>
+                    </div>
+
+                    <div class="frames-grid" id="framesGrid" style="display: none;">
+                        <h4>Analyzed Frames</h4>
+                        <div id="framesContainer">
+                            <!-- Frames injected here -->
+                        </div>
+                    </div>
+
+                    <button id="resetBtn" class="cta-button" style="margin-top: 2rem;">Analyze Another File</button>
                 </div>
             </div>
-
-            <button id="resetBtn" class="cta-button" style="margin-top: 2rem;">Analyze Another File</button>
         </div>
     </div>
 

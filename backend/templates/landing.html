@@ -13,38 +13,44 @@
     <nav class="navbar">
         <a href="/" class="logo">VisionShield</a>
         <div class="nav-links">
+            <a href="/">Home</a>
             <a href="#">About</a>
-            <a href="#">Contact</a>
-            <a href="/detect">Detect Video</a>
-            <a href="/detect">Detect Image</a>
+            <a href="/detect">Detect Image/Video</a>
+            <a href="/detect?mode=live" class="active-pulse">Live Webcam</a>
             <a href="#">Logout</a>
         </div>
     </nav>
 
     <section class="hero">
-        <h1>VisionShield - DeepFake Image & Video Detection</h1>
-        <p>Protect yourself from digital deception with our state-of-the-art deepfake detection technology. Upload your
-            video and get instant analysis powered by advanced AI.</p>
-        <a href="/detect" class="cta-button">START DETECTION</a>
+        <h1>VisionShield - DeepFake Detection Ecosystem</h1>
+        <p>Protect yourself from digital deception with our state-of-the-art AI. Analyze images, videos, or use your
+            webcam for real-time live detection.</p>
+        <div style="display: flex; gap: 1rem; margin-top: 1rem;">
+            <a href="/detect" class="cta-button">START UPLOAD</a>
+            <a href="/detect?mode=live" class="cta-button"
+                style="background: var(--accent-gradient); color: #000; box-shadow: 0 0 15px rgba(0, 242, 254, 0.5);">LIVE
+                CAMERA</a>
+        </div>
     </section>
 
     <section class="features">
-        <h2 class="section-title">Key Features</h2>
+        <h2 class="section-title">Detection Modes</h2>
         <div class="features-grid">
-            <div class="feature-card">
-                <i class="fas fa-bullseye upload-icon" style="font-size: 2rem; margin-bottom: 1rem;"></i>
-                <h3>HIGH ACCURACY</h3>
-                <p>Our advanced AI model achieves industry-leading accuracy in detecting manipulated videos.</p>
+            <div class="feature-card clickable" onclick="window.location.href='/detect'">
+                <i class="fas fa-image upload-icon"></i>
+                <h3>IMAGE DETECTION</h3>
+                <p>Analyze static photos for facial inconsistencies and spatial deepfake markers.</p>
             </div>
-            <div class="feature-card">
-                <i class="fas fa-bolt upload-icon" style="font-size: 2rem; margin-bottom: 1rem;"></i>
-                <h3>REAL-TIME ANALYSIS</h3>
-                <p>Get instant results with our efficient processing system and detailed confidence scores.</p>
+            <div class="feature-card clickable" onclick="window.location.href='/detect'">
+                <i class="fas fa-video upload-icon"></i>
+                <h3>VIDEO ANALYSIS</h3>
+                <p>Advanced temporal transformation to detect frame-to-frame synthetic patterns.</p>
             </div>
-            <div class="feature-card">
-                <i class="fas fa-user-shield upload-icon" style="font-size: 2rem; margin-bottom: 1rem;"></i>
-                <h3>USER-FRIENDLY</h3>
-                <p>Simple upload process and clear visualization of results make detection accessible to everyone.</p>
+            <div class="feature-card clickable live-card" onclick="window.location.href='/detect?mode=live'">
+                <div class="live-indicator-small"><span class="pulse-dot"></span> LIVE</div>
+                <i class="fas fa-camera upload-icon"></i>
+                <h3>LIVE WEBCAM</h3>
+                <p>Use your camera to test live feeds or phone replay attacks in real-time.</p>
             </div>
         </div>
     </section>
