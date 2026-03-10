@@ -119,11 +119,11 @@ function updateLiveUI(data) {
 
     if (statusEl) statusEl.innerHTML = '<span class="pulse-dot"></span> LIVE ANALYSIS ACTIVE';
 
-    const isFake = prediction.toLowerCase() === 'fake';
+    const isFake = prediction.toLowerCase().includes('fake');
     const percentage = Math.round(confidence * 100);
 
     const badge = document.getElementById('predictionBadge');
-    badge.textContent = isFake ? 'FAKE' : 'REAL';
+    badge.textContent = prediction.toUpperCase();
     badge.className = isFake ? 'badge fake' : 'badge real';
 
     document.getElementById('confidenceValue').textContent = `${percentage}%`;
@@ -233,11 +233,11 @@ function showResult(data) {
     resultCard.style.display = 'block';
 
     const { prediction, confidence, frames_analyzed, type } = data;
-    const isFake = prediction.toLowerCase() === 'fake';
+    const isFake = prediction.toLowerCase().includes('fake');
     const percentage = Math.round(confidence * 100);
 
     const badge = document.getElementById('predictionBadge');
-    badge.textContent = isFake ? 'FAKE' : 'REAL';
+    badge.textContent = prediction.toUpperCase();
     badge.className = isFake ? 'badge fake' : 'badge real';
 
     document.getElementById('confidenceValue').textContent = `${percentage}%`;

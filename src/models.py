@@ -2,10 +2,35 @@ import torch
 import torch.nn as nn
 import timm
 import logging
+from torchvision import models
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+class DeepfakeEfficientNet(nn.Module):
+    """
+    EfficientNet-B0 for Deepfake Detection using timm.
+    Matches the naming convention (blocks.x.x) found in models/deepfake_efficientnet.pth.
+    """
+    def __init__(self, num_classes=2, pretrained=True):
+        super(DeepfakeEfficientNet, self).__init__()
+        try:
+            # Create the EfficientNet model using timm
+            self.model = timm.create_model('efficientnet_b0', pretrained=pretrained, num_classes=num_classes)
+            logger.info("Successfully initialized DeepfakeEfficientNet (timm efficientnet_b0)")
+        except Exception as e:
+            logger.error(f"Error initializing EfficientNet via timm: {e}")
+            raise e
+
+    def forward(self, x):
+        return self.model(x)
+
+    def extract_features(self, x):
+        """
+        Extract features using timm's forward_features.
+        """
+        return self.model.forward_features(x)
 
 class DeepfakeViT(nn.Module):
     """

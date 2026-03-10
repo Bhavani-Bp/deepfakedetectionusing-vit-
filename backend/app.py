@@ -13,7 +13,7 @@ import numpy as np
 # Add parent directory to path to import src modules
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from src.models import DeepfakeViT, TemporalTransformer
+from src.models import DeepfakeViT, TemporalTransformer, DeepfakeEfficientNet
 from src.face_extraction import FaceExtractor
 
 # Configure Logging
@@ -30,31 +30,37 @@ DEVICE = 'cuda' if torch.cuda.is_available() else 'cpu'
 logger.info(f"Running on device: {DEVICE}")
 
 # --- Load Models ---
-# Initialize models (In a real scenario, you'd load weights here)
-# For this "Paid Version" demo, we initialize the architecture.
-# IF YOU HAVE WEIGHTS, LOAD THEM HERE.
 try:
-    image_model = DeepfakeViT(num_classes=2).to(DEVICE)
+    # 1. Try Loading ViT (Preferred if weights exist)
+    model_path_vit = os.path.join('models', 'deepfake_vit_best.pth')
+    model_path_eff = os.path.join('models', 'deepfake_efficientnet.pth')
     
-    # CHECK FOR TRAINED WEIGHTS
-    model_path = os.path.join('models', 'deepfake_vit_best.pth')
-    if os.path.exists(model_path):
-        logger.info(f"Loading trained weights from {model_path}...")
-        image_model.load_state_dict(torch.load(model_path, map_location=DEVICE))
+    if os.path.exists(model_path_vit):
+        logger.info(f"Loading ViT weights from {model_path_vit}...")
+        image_model = DeepfakeViT(num_classes=2).to(DEVICE)
+        image_model.load_state_dict(torch.load(model_path_vit, map_location=DEVICE))
+        input_dim = 768 # ViT-Base dimension
+    elif os.path.exists(model_path_eff):
+        logger.info(f"Loading EfficientNet weights from {model_path_eff}...")
+        image_model = DeepfakeEfficientNet(num_classes=2).to(DEVICE)
+        image_model.model.load_state_dict(torch.load(model_path_eff, map_location=DEVICE))
+        input_dim = 1280 # EfficientNet-B0 dimension
     else:
-        logger.warning("No trained weights found! Using random/ImageNet weights. Predictions will be inaccurate.")
-    
+        logger.warning("No trained weights found! Defaulting to ViT with random weights. Predictions will be inaccurate.")
+        image_model = DeepfakeViT(num_classes=2).to(DEVICE)
+        input_dim = 768
+
     image_model.eval()
     
-    # Video model: expects 768-dim features (ViT-Base)
-    video_model = TemporalTransformer(input_dim=768, num_classes=2).to(DEVICE)
+    # 2. Initialize Video Model with matching input dimension
+    video_model = TemporalTransformer(input_dim=input_dim, num_classes=2).to(DEVICE)
     # Ideally load video model weights too if trained
     video_model.eval()
     
     # Face Extractor
     face_extractor = FaceExtractor(device=DEVICE)
     
-    logger.info("Models loaded successfully.")
+    logger.info(f"Models loaded successfully. Backbone input dimension: {input_dim}")
 except Exception as e:
     logger.error(f"Error loading models: {e}")
     sys.exit(1)
@@ -76,6 +82,7 @@ def predict_single_image(pil_image):
         logits = image_model(tensor)
         probs = F.softmax(logits, dim=1)
         conf, pred_idx = torch.max(probs, 1)
+        
         return pred_idx.item(), conf.item()
 
 def extract_features_for_video(frames):
@@ -155,43 +162,30 @@ def predict_image():
         # Cleanup
         os.remove(filepath)
         
-        # --- PAID QUALITY LOGIC ---
-        # Requirement: "Fake only if confidence > 80%. Else -> Real / Likely Real"
-        # Assuming pred_idx 1 = Fake (based on standard folder structure 0=Real, 1=Fake usually)
-        # But we must ensure this maps to our dataset.
-        # In our dataset.py: 0=Real, 1=Fake.
+        # --- CORRECTED PREDICTION LOGIC (Label Inversion) ---
+        # Based on test_inference.py: 
+        # Index 0 = FAKE, Index 1 = REAL
         
-        is_fake_high_conf = (pred_idx == 1 and confidence >= 0.80)
-        
-        if is_fake_high_conf:
-            label = "FAKE"
-            final_conf = confidence
-        else:
-            # Conservative Approach: Even if model thinks it's 60% fake, we say "Likely Real" to avoid false accusations
-            # OR we just say "REAL" effectively.
-            if pred_idx == 1:
-                # Model predicts Fake but low confidence
-                label = "REAL (Low Confidence Fake)" # Or just "REAL" for user simplicity
-                label = "LIKELY REAL"
-                final_conf = 1.0 - confidence # Flip confidence to "Realness"
+        if pred_idx == 0: # CHANGED: 0 is FAKE
+            if confidence >= 0.70:
+                label = "FAKE"
             else:
+                label = "LIKELY FAKE"
+        else: # pred_idx == 1 is REAL
+            if confidence >= 0.70:
                 label = "REAL"
-                final_conf = confidence # It was predicted Real
+            else:
+                label = "LIKELY REAL"
         
-        # Simplification for UI consistency:
-        if pred_idx == 1 and confidence > 0.80:
-            label = "FAKE"
-        else:
-            label = "REAL"
-            # If it was actually predicted fake (e.g. 0.6) but we suppress it,
-            # we should probably show the Real confidence? 
-            # Or just show the raw confidence key.
-            # Let's stick to the prompt: "Fake only if > 80%"
-        
+        # Simple version for UI:
+        display_label = "FAKE" if (pred_idx == 0 and confidence >= 0.5) else "REAL"
+
         return jsonify({
-            "prediction": label,
-            "confidence": confidence, # Send raw model confidence for transparency? Or filtered?
-            "type": "image"
+            "prediction": label, # More descriptive for logs/advanced users
+            "display_prediction": display_label, # Binary for simple UI
+            "confidence": float(confidence),
+            "type": "image",
+            "raw_prediction": int(pred_idx)
         })
 
     except Exception as e:
@@ -240,16 +234,17 @@ def predict_live():
         # 3. Prediction
         pred_idx, confidence = predict_single_image(face_pil)
         
-        # --- PAID QUALITY LOGIC ---
-        if pred_idx == 1 and confidence > 0.80:
-            label = "FAKE"
+        # --- CORRECTED PREDICTION LOGIC ---
+        if pred_idx == 0:
+            label = "FAKE" if confidence >= 0.70 else "LIKELY FAKE"
         else:
-            label = "REAL"
+            label = "REAL" if confidence >= 0.70 else "LIKELY REAL"
             
         return jsonify({
             "prediction": label,
-            "confidence": confidence,
-            "type": "live"
+            "confidence": float(confidence),
+            "type": "live",
+            "raw_prediction": int(pred_idx)
         })
 
     except Exception as e:
@@ -288,12 +283,12 @@ def predict_video():
             probs = F.softmax(logits, dim=1)
             conf, pred_idx = torch.max(probs, 1)
             
-        # --- PAID QUALITY LOGIC ---
-        confidence = conf.item()
-        if pred_idx == 1 and confidence > 0.80:
-            label = "FAKE"
+        # --- CORRECTED PREDICTION LOGIC ---
+        confidence = float(conf.item())
+        if pred_idx == 0:
+            label = "FAKE" if confidence >= 0.70 else "LIKELY FAKE"
         else:
-            label = "REAL"
+            label = "REAL" if confidence >= 0.70 else "LIKELY REAL"
         
         # --- PREPARE FRAMES FOR UI ---
         # Convert PIL images to Base64 to show user "What the AI saw"
