@@ -192,64 +192,7 @@ def predict_image():
         logger.error(f"Error processing image: {e}")
         return jsonify({"error": str(e)}), 500
 
-@app.route('/predict-live', methods=['POST'])
-def predict_live():
-    """
-    Endpoint for real-time webcam analysis.
-    Accepts JSON with a 'image' field containing Base64 data.
-    """
-    data = request.get_json()
-    if not data or 'image' not in data:
-        return jsonify({"error": "No image data provided"}), 400
-    
-    try:
-        # 1. Decode Base64 Image
-        image_data = data['image']
-        if ',' in image_data:
-            image_data = image_data.split(',')[1]
-        
-        import base64
-        from io import BytesIO
-        img_bytes = base64.b64decode(image_data)
-        img = Image.open(BytesIO(img_bytes)).convert('RGB')
-        
-        # 2. Face Extraction
-        # For live mode, we use MTCNN on the PIL image directly
-        face = face_extractor.mtcnn(img)
-        
-        # If MTCNN returns None (no face), fallback to raw image OR return error
-        # For a "Paid" smooth experience, if no face is visible, we'll inform the UI
-        # so it doesn't flicker with a random prediction.
-        if face is None:
-            return jsonify({
-                "prediction": "NO FACE DETECTED",
-                "confidence": 0,
-                "type": "live"
-            })
-            
-        # Convert tensor back to PIL for prediction function
-        face_np = face.permute(1, 2, 0).int().numpy().astype(np.uint8)
-        face_pil = Image.fromarray(face_np)
-        
-        # 3. Prediction
-        pred_idx, confidence = predict_single_image(face_pil)
-        
-        # --- CORRECTED PREDICTION LOGIC ---
-        if pred_idx == 0:
-            label = "FAKE" if confidence >= 0.70 else "LIKELY FAKE"
-        else:
-            label = "REAL" if confidence >= 0.70 else "LIKELY REAL"
-            
-        return jsonify({
-            "prediction": label,
-            "confidence": float(confidence),
-            "type": "live",
-            "raw_prediction": int(pred_idx)
-        })
 
-    except Exception as e:
-        logger.error(f"Error in live prediction: {e}")
-        return jsonify({"error": str(e)}), 500
 
 @app.route('/predict-video', methods=['POST'])
 def predict_video():
