@@ -31,9 +31,10 @@ logger.info(f"Running on device: {DEVICE}")
 
 # --- Load Models ---
 try:
+    base_dir = os.path.dirname(os.path.abspath(__file__))
     # 1. Try Loading ViT (Preferred if weights exist)
-    model_path_vit = os.path.join('models', 'deepfake_vit_best.pth')
-    model_path_eff = os.path.join('models', 'deepfake_efficientnet.pth')
+    model_path_vit = os.path.join(base_dir, '..', 'models', 'deepfake_vit_best.pth')
+    model_path_eff = os.path.join(base_dir, '..', 'models', 'deepfake_efficientnet.pth')
     
     if os.path.exists(model_path_vit):
         logger.info(f"Loading ViT weights from {model_path_vit}...")
@@ -162,23 +163,17 @@ def predict_image():
         # Cleanup
         os.remove(filepath)
         
-        # --- CORRECTED PREDICTION LOGIC (Label Inversion) ---
-        # Based on test_inference.py: 
-        # Index 0 = FAKE, Index 1 = REAL
+        # --- CORRECTED PREDICTION LOGIC ---
+        # Based on dataset.py mapping:
+        # Index 0 = REAL, Index 1 = FAKE
         
-        if pred_idx == 0: # CHANGED: 0 is FAKE
-            if confidence >= 0.70:
-                label = "FAKE"
-            else:
-                label = "LIKELY FAKE"
-        else: # pred_idx == 1 is REAL
-            if confidence >= 0.70:
-                label = "REAL"
-            else:
-                label = "LIKELY REAL"
+        if pred_idx == 1:
+            label = "FAKE"
+        else:
+            label = "REAL"
         
         # Simple version for UI:
-        display_label = "FAKE" if (pred_idx == 0 and confidence >= 0.5) else "REAL"
+        display_label = label
 
         return jsonify({
             "prediction": label, # More descriptive for logs/advanced users
@@ -216,22 +211,28 @@ def predict_video():
             
         frames_analyzed = len(faces)
         
-        # 2. Extract Features
-        # Input: [1, Seq_Len, Features]
-        video_features = extract_features_for_video(faces) # [1, 10, 768]
+        # 2. Average Predictions Over Frames
+        fake_prob_sum = 0.0
+        real_prob_sum = 0.0
+        for face in faces:
+            tensor = transform(face).unsqueeze(0).to(DEVICE)
+            with torch.no_grad():
+                logits = image_model(tensor)
+                probs = F.softmax(logits, dim=1)
+                real_prob_sum += probs[0, 0].item()
+                fake_prob_sum += probs[0, 1].item()
+                
+        avg_fake_prob = fake_prob_sum / frames_analyzed
+        avg_real_prob = real_prob_sum / frames_analyzed
         
-        # 3. Temporal Prediction
-        with torch.no_grad():
-            logits = video_model(video_features)
-            probs = F.softmax(logits, dim=1)
-            conf, pred_idx = torch.max(probs, 1)
-            
-        # --- CORRECTED PREDICTION LOGIC ---
-        confidence = float(conf.item())
-        if pred_idx == 0:
-            label = "FAKE" if confidence >= 0.70 else "LIKELY FAKE"
+        if avg_fake_prob > avg_real_prob:
+            pred_idx = 1
+            confidence = float(avg_fake_prob)
+            label = "FAKE"
         else:
-            label = "REAL" if confidence >= 0.70 else "LIKELY REAL"
+            pred_idx = 0
+            confidence = float(avg_real_prob)
+            label = "REAL"
         
         # --- PREPARE FRAMES FOR UI ---
         # Convert PIL images to Base64 to show user "What the AI saw"
