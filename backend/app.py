@@ -15,6 +15,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from src.models import DeepfakeViT, TemporalTransformer, DeepfakeEfficientNet
 from src.face_extraction import FaceExtractor
+from transformers import VideoMAEImageProcessor, TimesformerForVideoClassification
 
 # Configure Logging
 logging.basicConfig(level=logging.INFO)
@@ -53,15 +54,16 @@ try:
 
     image_model.eval()
     
-    # 2. Initialize Video Model with matching input dimension
-    video_model = TemporalTransformer(input_dim=input_dim, num_classes=2).to(DEVICE)
-    # Ideally load video model weights too if trained
+    # 2. Initialize Video Model (TimeSformer)
+    logger.info("Initializing TimeSformer for advanced video analysis...")
+    video_processor = VideoMAEImageProcessor.from_pretrained("MCG-NJU/videomae-base")
+    video_model = TimesformerForVideoClassification.from_pretrained("facebook/timesformer-base-finetuned-k400").to(DEVICE)
     video_model.eval()
     
-    # Face Extractor
+    # Face Extractor (Keeping it for image tasks)
     face_extractor = FaceExtractor(device=DEVICE)
     
-    logger.info(f"Models loaded successfully. Backbone input dimension: {input_dim}")
+    logger.info("Models loaded successfully. TimeSformer is active for video detection.")
 except Exception as e:
     logger.error(f"Error loading models: {e}")
     sys.exit(1)
@@ -201,61 +203,73 @@ def predict_video():
         filepath = os.path.join(UPLOAD_FOLDER, file.filename)
         file.save(filepath)
         
-        # 1. Extract Frames (Faces)
-        # "1-3 FPS" - process_video samples frames. Defaults to 10 frames total.
-        faces = face_extractor.process_video(filepath, num_frames=10)
+        # 1. Extract Frames for TimeSformer
+        # We need a sequence of frames (e.g., 8 or 16)
+        import cv2
+        cap = cv2.VideoCapture(filepath)
+        total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
         
-        if not faces:
-            # os.remove(filepath)
-            return jsonify({"error": "No faces detected in video frames"}), 400
-            
-        frames_analyzed = len(faces)
+        if total_frames <= 0:
+             return jsonify({"error": "Invalid video file"}), 400
+             
+        # Extract 8 frames evenly
+        indices = np.linspace(0, total_frames - 1, 8, dtype=int)
+        frames = []
+        for idx in indices:
+            cap.set(cv2.CAP_PROP_POS_FRAMES, idx)
+            ret, frame = cap.read()
+            if not ret: break
+            frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            frame = cv2.resize(frame, (224, 224))
+            frames.append(frame)
+        cap.release()
+
+        if len(frames) < 8:
+            return jsonify({"error": "Video too short for analysis"}), 400
+
+        # 2. TimeSformer Inference
+        inputs = video_processor(list(frames), return_tensors="pt").to(DEVICE)
         
-        # 2. Average Predictions Over Frames
-        fake_prob_sum = 0.0
-        real_prob_sum = 0.0
-        for face in faces:
-            tensor = transform(face).unsqueeze(0).to(DEVICE)
-            with torch.no_grad():
-                logits = image_model(tensor)
-                probs = F.softmax(logits, dim=1)
-                real_prob_sum += probs[0, 0].item()
-                fake_prob_sum += probs[0, 1].item()
-                
-        avg_fake_prob = fake_prob_sum / frames_analyzed
-        avg_real_prob = real_prob_sum / frames_analyzed
+        with torch.no_grad():
+            outputs = video_model(**inputs)
+            probs = torch.softmax(outputs.logits, dim=-1)
+            max_conf = torch.max(probs).item()
         
-        if avg_fake_prob > avg_real_prob:
-            pred_idx = 1
-            confidence = float(avg_fake_prob)
-            label = "FAKE"
-        else:
-            pred_idx = 0
-            confidence = float(avg_real_prob)
+        # 3. Logic based on threshold 0.7
+        # Note: Kinetics-400 doesn't have a direct "Fake" label, 
+        # so we use the user's logic: High confidence in a pattern -> Real, else Fake.
+        if max_conf > 0.7:
             label = "REAL"
-        
-        # --- PREPARE FRAMES FOR UI ---
-        # Convert PIL images to Base64 to show user "What the AI saw"
+            confidence = max_conf
+        else:
+            label = "FAKE"
+            confidence = 1.0 - max_conf # Or just max_conf depending on how you want to show it
+
+        # --- PREPARE FRAMES FOR UI (Compatibility with original design) ---
         import base64
         from io import BytesIO
+        from PIL import Image
         
         encoded_frames = []
-        for face_img in faces:
+        for frame_arr in frames:
+            pil_img = Image.fromarray(frame_arr)
             buffered = BytesIO()
-            face_img.save(buffered, format="JPEG")
+            pil_img.save(buffered, format="JPEG")
             img_str = base64.b64encode(buffered.getvalue()).decode('utf-8')
             encoded_frames.append(img_str)
-        
+
         # Cleanup
         if os.path.exists(filepath):
             os.remove(filepath)
         
         return jsonify({
             "prediction": label,
-            "confidence": confidence,
-            "frames_analyzed": frames_analyzed,
-            "sampled_frames": encoded_frames, # NEW: Send frames to UI
-            "type": "video"
+            "confidence": float(confidence),
+            "frames_analyzed": len(frames),
+            "sampled_frames": encoded_frames,
+            "type": "video",
+            "model_used": "TimeSformer",
+            "device": DEVICE
         })
 
     except Exception as e:
